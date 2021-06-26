@@ -1,62 +1,58 @@
-from flask import Blueprint, render_template
-from werkzeug.utils import redirect
-from blog.user.views import USERS
+from flask import Blueprint, render_template, request, redirect, url_for
+from flask_login import login_required, current_user
+from werkzeug.exceptions import NotFound
+
+from blog.extensions import db
+from blog.forms.article import CreateArticleForm
+from blog.models import Article, Author
 
 article = Blueprint('article', __name__, url_prefix='/articles', static_folder='../static')
 
-ARTICLES = {
-    1:
-        {
-            'id': 1,
-            'title': 'Top 100 in Earth Science',
-            'text': 'some text',
-            'author': {
-                'name': USERS[1],
-                'id': 1,
-            }
-        },
-    2:
-        {
-            'id': 2,
-            'title': 'Hubble Gazes at a Cluster Full of Cosmic Clues',
-            'text': 'some text',
-            'author': {
-                'name': USERS[2],
-                'id': 2,
-            }
-        },
-    3:
-        {
-            'id': 3,
-            'title': 'NASA’s Ingenuity Mars Helicopter Completes First One-Way Trip',
-            'text': 'some text',
-            'author': {
-                'name': USERS[3],
-                'id': 3,
-            }
-        }
-}
 
-
-@article.route('/')
+@article.route('/', methods=['GET'])
 def article_list():
+    articles: Article = Article.query.all()
     return render_template(
         'articles/list.html',
-        articles=ARTICLES,
+        articles=articles,
     )
 
 
-@article.route('/<int:pk>')
-def get_article(pk: int):
-    try:
-        article_name = ARTICLES[pk]['title']
-        article_text = ARTICLES[pk]['text']
-        article_author = ARTICLES[pk]['author']
-    except KeyError:
-        return redirect('/articles')
+@article.route('/<int:article_id>/', methods=['GET'])
+def article_detail(article_id):
+    _article: Article = Article.query.filter_by(id=article_id).one_or_none()
+    if _article is None:
+        raise NotFound
     return render_template(
         'articles/details.html',
-        article_name=article_name,
-        article_text=article_text,
-        article_author=article_author
+        article=_article,
     )
+
+
+@article.route('/create/', methods=['GET'])
+@login_required
+def create_article_form():
+    form = CreateArticleForm(request.form)
+    return render_template('articles/create.html', form=form)
+
+
+@article.route('/', methods=['POST'])
+@login_required
+def create_article():
+    form = CreateArticleForm(request.form)
+    if form.validate_on_submit():
+        _article = Article(title=form.title.data.strip(), text=form.text.data)
+        if current_user.author:
+            _article.author_id = current_user.author.id
+        else:
+            author = Author(user_id=current_user.id)
+            db.session.add(author)
+            db.session.flush()
+            _article.author_id = author.id
+
+        db.session.add(_article)
+        db.session.commit()
+
+        return redirect(url_for('article.article_detail', article_id=_article.id))
+
+    return render_template('articles/create.html', form=form)
