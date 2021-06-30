@@ -1,8 +1,8 @@
-from flask import render_template, Blueprint
+from flask import Blueprint, render_template
 
 from blog.models import Author
 
-author = Blueprint('author', __name__, url_prefix='/authors', static_folder='../static')
+author = Blueprint('author', __name__, url_prefix='/author', static_folder='../static')
 
 
 @author.route('/')
