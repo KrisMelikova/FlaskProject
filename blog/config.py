@@ -15,3 +15,5 @@ SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 WTF_CSRF_ENABLED = True
+
+# FLACK_ADMIN_SWATCH = 'cosmo'  <-- так можно поменять шаблон админки
