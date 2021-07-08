@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Tag
+{% endblock %}
+
+{% block body %}
+    What else articles with this tag:
+    {% for article in tag.articles %}
+        <a href="{{ url_for('article.article_detail', article_id=article.id) }}" class="card-link">{{ article.title }}</a>
+    {% endfor %}
+{% endblock %}
