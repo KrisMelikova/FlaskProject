@@ -31,7 +31,7 @@ def article_detail(article_id):
         raise NotFound
     return render_template(
         'articles/details.html',
-        article=_article
+        article=_article,
     )
 
 
@@ -72,15 +72,3 @@ def create_article():
         return redirect(url_for('article.article_detail', article_id=_article.id))
 
     return render_template('articles/create.html', form=form)
-
-
-@article.route('/tags/<int:tag_id>/', methods=['GET'])
-def tags(tag_id):
-    tag: Tag = Tag.query.filter_by(id=tag_id).options(joinedload(Tag.articles)).one_or_none()
-
-    if tag is None:
-        raise NotFound
-    return render_template(
-        'articles/tag.html',
-        tag=tag
-    )

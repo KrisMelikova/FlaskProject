@@ -5,14 +5,26 @@ from flask import redirect, url_for
 
 
 class CustomAdminView(ModelView):
+
+    def create_blueprint(self, admin):
+        blueprint = super().create_blueprint(admin)
+        blueprint.name = f'{blueprint.name}_admin'
+        return blueprint
+
+    def get_url(self, endpoint, **kwargs):
+        if not (endpoint.startswith('.') or endpoint.startswith('admin.')):
+            endpoint = endpoint.replace('.', '_admin.')
+        return super().get_url(endpoint, **kwargs)
+
     def is_accessible(self):
         return current_user.is_authenticated and current_user.is_staff
 
-    def inaccessible_callback(self, name, **kwarga):
+    def inaccessible_callback(self, name, **kwargs):
         return redirect(url_for('auth.login'))
 
 
 class CustomAdminIndexView(AdminIndexView):
+
     @expose()
     def index(self):
         if not (current_user.is_authenticated and current_user.is_staff):
@@ -36,16 +48,9 @@ class UserAdminView(CustomAdminView):
     column_exclude_list = ('password',)
     column_details_exclude_list = ('password',)
     column_export_exclude_list = ('password',)
-    can_create = False
+    form_columns = ('first_name', 'last_name', 'is_staff')
     can_delete = False
     can_edit = True
+    can_create = False
     can_view_details = False
-    column_editable_list = ('first_name', 'last_name', )
-
-
-# from flask import Blueprint
-
-# admin_bp = Blueprint('admin_bp', __name__)
-
-# from blog.admin.routes import admin
-
+    column_editable_list = ('first_name', 'last_name', 'is_staff')
